@@ -1,5 +1,7 @@
 # clipssh
 
+> **LydiaTools community fork — collision fix preview.** Based on [samuellawrentz/clipssh](https://github.com/samuellawrentz/clipssh), with its MIT license and authorship retained. This branch gives each upload a private, unique remote directory to avoid reusing a filename. Tested on macOS with synthetic clipboard inputs and a temporary loopback SSH server; Linux, Windows, real clipboards, and external SSH hosts have not been tested here. This fork is not an upstream release.
+
 Send clipboard screenshots to remote SSH hosts. Perfect for pasting images into AI coding tools like Claude Code or OpenCode running over SSH.
 
 ## The Problem
