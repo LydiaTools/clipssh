@@ -2,7 +2,9 @@
 
 [中文说明](README.zh-CN.md)
 
-> **LydiaTools community fork — collision fix preview.** Based on [samuellawrentz/clipssh](https://github.com/samuellawrentz/clipssh), with its MIT license and authorship retained. This branch gives each upload a private, unique remote directory to avoid reusing a filename. Tested on macOS with synthetic clipboard inputs and a temporary loopback SSH server; Linux, Windows, real clipboards, and external SSH hosts have not been tested here. This fork is not an upstream release.
+> **LydiaTools community fork — collision fix preview.** Based on [samuellawrentz/clipssh](https://github.com/samuellawrentz/clipssh), with its MIT license and authorship retained. This branch gives each upload a private, unique remote directory to avoid reusing a filename. Synthetic checks run on Linux and macOS; a temporary loopback SSH server was tested on macOS. Real clipboards, external SSH hosts and Windows have not been tested here. This fork is not an upstream release.
+
+[![Synthetic checks](https://github.com/LydiaTools/clipssh/actions/workflows/synthetic-checks.yml/badge.svg?branch=fix%2Funique-remote-upload)](https://github.com/LydiaTools/clipssh/actions/workflows/synthetic-checks.yml)
 
 Send clipboard screenshots to remote SSH hosts. Perfect for pasting images into AI coding tools like Claude Code or OpenCode running over SSH.
 
