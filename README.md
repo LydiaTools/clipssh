@@ -15,15 +15,16 @@ When using Claude Code, OpenCode (or similar tools) over SSH, you can't paste im
 ## Install
 
 ```bash
-# macOS (requires Homebrew)
+# macOS: install the clipboard dependency first
 brew install pngpaste
-curl -fsSL https://raw.githubusercontent.com/samuellawrentz/clipssh/main/install.sh | bash
 
-# Or clone and install
-git clone https://github.com/samuellawrentz/clipssh.git
+# Clone this preview fork, then install from the checkout
+git clone --branch fix/unique-remote-upload https://github.com/LydiaTools/clipssh.git
 cd clipssh
 ./install.sh
 ```
+
+On Linux, install `xclip` or `wl-clipboard` before running the installer. The installer must run from this checkout; it does not download the original upstream version.
 
 ## Usage
 

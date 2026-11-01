@@ -6,7 +6,6 @@
 set -e
 
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
-REPO_URL="https://raw.githubusercontent.com/samuellawrentz/clipssh/main/clipssh"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -16,6 +15,10 @@ NC='\033[0m'
 info() { echo -e "${GREEN}==>${NC} $1"; }
 warn() { echo -e "${YELLOW}Warning:${NC} $1"; }
 error() { echo -e "${RED}Error:${NC} $1" >&2; exit 1; }
+
+# Fail before installing dependencies or creating directories when invoked
+# outside the preview checkout.
+[[ -f "clipssh" ]] || error "Run this installer from the preview fork checkout"
 
 # Check OS
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -47,14 +50,9 @@ fi
 # Create install directory
 mkdir -p "$INSTALL_DIR"
 
-# Download or copy script
-if [[ -f "clipssh" ]]; then
-    info "Installing from local file..."
-    cp clipssh "$INSTALL_DIR/clipssh"
-else
-    info "Downloading clipssh..."
-    curl -fsSL "$REPO_URL" -o "$INSTALL_DIR/clipssh"
-fi
+# This preview fork must install its own local script, not upstream main.
+info "Installing from local file..."
+cp clipssh "$INSTALL_DIR/clipssh"
 
 chmod +x "$INSTALL_DIR/clipssh"
 
