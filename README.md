@@ -1,5 +1,7 @@
 # clipssh
 
+[中文说明](README.zh-CN.md)
+
 > **LydiaTools community fork — collision fix preview.** Based on [samuellawrentz/clipssh](https://github.com/samuellawrentz/clipssh), with its MIT license and authorship retained. This branch gives each upload a private, unique remote directory to avoid reusing a filename. Tested on macOS with synthetic clipboard inputs and a temporary loopback SSH server; Linux, Windows, real clipboards, and external SSH hosts have not been tested here. This fork is not an upstream release.
 
 Send clipboard screenshots to remote SSH hosts. Perfect for pasting images into AI coding tools like Claude Code or OpenCode running over SSH.
@@ -10,7 +12,7 @@ When using Claude Code, OpenCode (or similar tools) over SSH, you can't paste im
 
 ## The Solution
 
-`clipssh` extracts the screenshot from your local clipboard, uploads it to the remote server, and copies the file path to your clipboard. Just paste the path into Claude Code, OpenCode, or any terminal tool and it auto-attaches the image.
+`clipssh` extracts the screenshot from your local clipboard, uploads it to the remote server, and copies the file path to your clipboard. Paste the path and ask your coding assistant to read the remote file; whether a path is attached automatically depends on the assistant and terminal.
 
 ## Install
 
@@ -36,7 +38,7 @@ On Linux, install `xclip` or `wl-clipboard` before running the installer. The in
 clipssh user@myserver
 
 # 3. Cmd/Ctrl + V in SSH Machine
-# The image will auto-attach
+# Ask your assistant to read the remote file
 ```
 
 ## Custom SSH Port
