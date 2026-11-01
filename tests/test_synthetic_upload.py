@@ -24,6 +24,10 @@ class SyntheticUpload(unittest.TestCase):
         self.remote.mkdir()
         self.stub('pngpaste', 'cp "$TEST_INPUT" "$1"')
         self.stub('pbcopy', 'cat > "$TEST_OUTPUT"')
+        self.stub('xclip', '''case " $* " in
+  *" -o "*) cat "$TEST_INPUT" ;;
+  *) cat > "$TEST_OUTPUT" ;;
+esac''')
         self.stub('ssh', '''if [ "$1" = "-V" ]; then echo OpenSSH_9.0 >&2; exit 0; fi
 for arg do last=$arg; done
 case " $* " in *" synthetic@host "*) ;; *) exit 97 ;; esac
@@ -42,11 +46,13 @@ exec /bin/cat "$@"''')
         path.write_text('#!/bin/sh\n' + body + '\n')
         path.chmod(0o700)
 
-    def start(self, source, label, **overrides):
+    def start(self, source, label, force_linux=False, **overrides):
         env = os.environ.copy()
+        env.pop('WAYLAND_DISPLAY', None)
         env.update({'PATH': str(self.bin) + os.pathsep + env['PATH'], 'CLIPSSH_REMOTE_DIR': str(self.remote), 'TEST_INPUT': str(source), 'TEST_OUTPUT': str(self.root / label)})
         env.update(overrides)
-        return subprocess.Popen(['bash', str(SCRIPT), 'synthetic@host'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+        command = ['bash', '-c', 'OSTYPE=linux-gnu; source "$1" synthetic@host', '_', str(SCRIPT)] if force_linux else ['bash', str(SCRIPT), 'synthetic@host']
+        return subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
 
     def test_parallel_uploads_preserve_both_images_and_permissions(self):
         first = self.start(self.a, 'out-a')
@@ -94,6 +100,12 @@ exec /bin/cat "$@"''')
         self.assertIn('outcome may be unknown', stderr)
         self.assertFalse((self.root / 'out-transport').exists())
         self.assertEqual(existing.read_text(), 'keep')
+
+    def test_linux_clipboard_branch_uses_stubbed_xclip(self):
+        proc = self.start(self.a, 'out-linux', force_linux=True)
+        _, stderr = proc.communicate(timeout=10)
+        self.assertEqual(proc.returncode, 0, stderr)
+        self.assertEqual(Path((self.root / 'out-linux').read_text()).read_bytes(), PNG_A)
 
 
 if __name__ == '__main__':

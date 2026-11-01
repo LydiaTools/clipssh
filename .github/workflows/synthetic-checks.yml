@@ -1,0 +1,23 @@
+name: Synthetic checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Check shell syntax
+        run: bash -n clipssh install.sh
+      - name: Run synthetic upload and install checks
+        run: python3 -m unittest discover -s tests -v
