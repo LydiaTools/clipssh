@@ -111,7 +111,7 @@ Uploads land in `/tmp` by default. Override with `CLIPSSH_REMOTE_DIR`:
 export CLIPSSH_REMOTE_DIR=~/.cache/clipssh   # must already exist on the remote
 ```
 
-Files are written with `umask 077` so they're created as `0600` (owner-readable only) — important on shared hosts where `/tmp` is world-readable by default.
+Each upload is placed in a newly created private directory under the chosen remote directory. Files use `0600` and directories use `0700`; simultaneous uploads do not reuse a timestamp-based filename. Remove the uploaded file and its containing directory on the remote when they are no longer needed. If SSH disconnects during upload, the outcome may be unknown; check the remote directory before retrying.
 
 ## Requirements
 
@@ -126,7 +126,7 @@ Files are written with `umask 077` so they're created as `0600` (owner-readable 
 ## How It Works
 
 1. Extracts PNG image from your local clipboard
-2. Uploads to `$CLIPSSH_REMOTE_DIR/clipboard-<timestamp>.png` (default `/tmp`) on remote host via SSH, with `umask 077` so the file is `0600`
+2. Creates `$CLIPSSH_REMOTE_DIR/clipboard-<random>/image.png` (default `/tmp`) on the remote host via SSH, with a private directory and `0600` file
 3. Copies the remote path to your clipboard
 4. You paste the path into Claude Code, OpenCode, or any tool, which reads and displays the image
 

@@ -186,9 +186,11 @@ else
     error "Unsupported OS: $OSTYPE"
 fi
 
-# Create temp file
-TEMP_FILE=$(mktemp).png
-trap "rm -f $TEMP_FILE" EXIT
+# Keep the local temporary image and its container together for cleanup.
+TEMP_DIR=$(mktemp -d)
+TEMP_FILE="$TEMP_DIR/image.png"
+cleanup_local() { rm -f "$TEMP_FILE"; rmdir "$TEMP_DIR" 2>/dev/null || true; }
+trap cleanup_local EXIT
 
 # Extract image from clipboard
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -206,9 +208,17 @@ if [[ ! -s "$TEMP_FILE" ]]; then
     error "Clipboard image is empty"
 fi
 
-# Generate remote path
+# The remote directory must exist; use a per-upload private directory so two
+# uploads in the same second cannot overwrite one another.
 REMOTE_DIR="${CLIPSSH_REMOTE_DIR:-/tmp}"
-REMOTE_PATH="$REMOTE_DIR/clipboard-$(date +%s).png"
+case "$REMOTE_DIR" in *$'\n'*|*$'\r'*) error "Remote directory cannot contain a newline" ;; esac
+case "$REMOTE_DIR" in /*) ;; *) REMOTE_DIR="./$REMOTE_DIR" ;; esac
+REMOTE_DIR="${REMOTE_DIR%/}"
+[[ -n "$REMOTE_DIR" ]] || REMOTE_DIR="/"
+if [[ "$REMOTE_DIR" == "/" ]]; then REMOTE_DIR=""; fi
+# ssh passes a command through a remote shell, so quote directory bytes as one
+# POSIX shell word instead of interpreting spaces or shell metacharacters.
+REMOTE_QUOTED=${REMOTE_DIR//\'/\'\\\'\'}
 
 # Prepare SSH options
 SSH_OPTS=()
@@ -228,11 +238,20 @@ if [[ "$SSH_VER" =~ OpenSSH_([0-9]+)\.([0-9]+) ]]; then
 fi
 SSH_OPTS+=("-o" "RequestTTY=no" "-T")
 
-# Upload via SSH. umask 077 keeps the remote file at mode 0600 so screenshots
-# aren't world-readable on multi-user hosts (default /tmp is shared).
-if ! cat "$TEMP_FILE" | ssh "${SSH_OPTS[@]}" "$HOST" "umask 077 && cat > $REMOTE_PATH" 2>/dev/null; then
-    error "Failed to upload to $HOST"
+# Allocate and write in one SSH session. mktemp -d atomically reserves a
+# private directory on GNU and BSD systems; its trailing Xs are required by BSD.
+# If the data stream fails, remove only the file and directory just created.
+REMOTE_CMD="dir='$REMOTE_QUOTED'; umask 077; upload_dir=\$(mktemp -d \"\$dir/clipboard-XXXXXXXX\") || exit 1; upload_file=\"\$upload_dir/image.png\"; if ! cat > \"\$upload_file\"; then rm -f \"\$upload_file\"; rmdir \"\$upload_dir\" 2>/dev/null; exit 1; fi; printf '%s\\n' \"\$upload_file\""
+if ! REMOTE_PATH=$(ssh "${SSH_OPTS[@]}" "$HOST" "$REMOTE_CMD" < "$TEMP_FILE" 2>/dev/null); then
+    error "Failed to upload to $HOST; the remote outcome may be unknown"
 fi
+# Do not put unexpected SSH output (for example a login banner) into the
+# clipboard as if it were the returned path.
+case "$REMOTE_PATH" in
+    "$REMOTE_DIR"/clipboard-*) REMOTE_SUFFIX="${REMOTE_PATH#"$REMOTE_DIR"/clipboard-}" ;;
+    *) error "Unexpected remote response; the upload outcome is unknown" ;;
+esac
+[[ "$REMOTE_SUFFIX" =~ ^[[:alnum:]]{8}/image\.png$ ]] || error "Unexpected remote response; the upload outcome is unknown"
 
 # Copy path to clipboard
 if [[ "$OSTYPE" == "darwin"* ]]; then
